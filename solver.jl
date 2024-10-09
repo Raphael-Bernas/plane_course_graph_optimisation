@@ -1,4 +1,5 @@
 using Gurobi
+using JuMP
 using LinearAlgebra
 
 # Include the readInstance function
@@ -72,6 +73,5 @@ function solveInstance(file::String)
     end
 end
 
-# Example usage:
-# path = solveInstance("path/to/instance.txt")
-# println("Optimal path: ", path)
+path = solveInstance("/home/bernas/VSC/JULIA/SOD321/project/Instances/instance_6_1.txt")
+println("Optimal path: ", path)
