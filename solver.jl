@@ -152,8 +152,8 @@ function solveInstanceDFJ(file::String)
 end
 
 
-path = solveInstanceDFJ("./instance_6_1.txt")
+path = solveInstanceDFJ(".Instances/instance_6_1.txt")
 println("Optimal path: ", path)
 
-#path = solveInstanceMTZ("./instance_6_1.txt")
+#path = solveInstanceMTZ(".Instances/instance_6_1.txt")
 #println("Optimal path: ", path)

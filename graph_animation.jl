@@ -10,7 +10,7 @@ function animateGraphTraversal(file::String, output_path::String)
     n, d, f, Amin, Nr, R, regions, coords, D = readInstance(file)
     
     # Solve the instance to get the optimal path
-    path = solveInstance(file)
+    path = solveInstanceMTZ(file)
     
     # Create adjacency matrix A based on distance matrix D
     A = Float64[ if D[i, j] <= R D[i, j] else 0 end for i=1:n, j=1:n ]
