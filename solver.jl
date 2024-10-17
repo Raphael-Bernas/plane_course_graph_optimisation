@@ -35,18 +35,23 @@ function solveInstanceMTZ(file::String)
     @constraint(model, sum(x[i,j] for i in 1:n, j in 1:n) + 1 >= Amin)
     
     # MTZ constraints for subtour elimination
-    for i in 2:n
-        for j in 2:n
-            if i != j
-                @constraint(model, u[j] >= u[i] + 1 - n * (1 - x[i,j]))
-            end
+    for i in 1:n
+        for j in 1:n
+            @constraint(model, u[j] >= u[i] + 1 - n * (1 - x[i,j]))
         end
     end
     
     # Regional visit constraints
     for r in 1:Nr
-        @constraint(model, sum(x[i,j] for i in regions[r], j in 1:n) >= 1)
+        @constraint(model, sum(x[i,j]+x[j,i] for i in regions[r], j in 1:n) >= 1)
     end
+
+    # R
+    for i in 1:n
+        for j in 1:n 
+            @constraint(model, x[i,j]*D[i,j]<=R) 
+        end 
+    end 
     
     # Solve the model
     optimize!(model)
@@ -111,8 +116,15 @@ function solveInstanceDFJ(file::String)
     
     # Regional visit constraints
     for r in 1:Nr
-        @constraint(model, sum(x[i,j] for i in regions[r], j in 1:n) >= 1)
+        @constraint(model, sum(x[i,j]+x[j,i] for i in regions[r], j in 1:n) >= 1)
     end
+
+    # R
+    for i in 1:n
+        for j in 1:n 
+            @constraint(model, x[i,j]*D[i,j]<=R) 
+        end 
+    end 
     
     # Solve the model
     optimize!(model)
@@ -140,8 +152,8 @@ function solveInstanceDFJ(file::String)
 end
 
 
-path = solveInstanceDFJ("/home/bernas/VSC/JULIA/SOD321/project/Instances/instance_6_1.txt")
+path = solveInstanceDFJ("./instance_6_1.txt")
 println("Optimal path: ", path)
 
-path = solveInstanceMTZ("/home/bernas/VSC/JULIA/SOD321/project/Instances/instance_6_1.txt")
-println("Optimal path: ", path)
+#path = solveInstanceMTZ("./instance_6_1.txt")
+#println("Optimal path: ", path)
