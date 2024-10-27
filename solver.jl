@@ -4,6 +4,7 @@ using LinearAlgebra
 
 # Include the readInstance function
 include("lecture_distances.jl")
+include("subtour.jl")
 
 function solveInstanceMTZ(file::String)
     # Read instance data
@@ -151,8 +152,83 @@ function solveInstanceDFJ(file::String)
     end
 end
 
+function solveInstanceSubDFJ(file::String)
+    # Read instance data
+    n, d, f, Amin, Nr, R, regions, coords, D = readInstance(file)
+    
+    # Create model
+    model = Model(Gurobi.Optimizer)
+    
+    # Decision variables
+    @variable(model, x[1:n, 1:n], Bin)
+    
+    # Objective: Minimize total distance
+    @objective(model, Min, sum(D[i,j] * x[i,j] for i in 1:n, j in 1:n))
+    
+    # Constraints
+    # Departure and arrival constraints
+    @constraint(model, sum(x[d,j] for j in 1:n) == 1)
+    @constraint(model, sum(x[i,f] for i in 1:n) == 1)
+    
+    for k in 1:n
+        if k != d && k != f
+            @constraint(model, sum(x[k,j] for j in 1:n) <= 1)
+            @constraint(model, sum(x[i,k] for i in 1:n) == sum(x[k,j] for j in 1:n))
+        end
+    end
+    
+    # Minimum number of airports constraint
+    @constraint(model, sum(x[i,j] for i in 1:n, j in 1:n) + 1 >= Amin)
+    
+    # Regional visit constraints
+    for r in 1:Nr
+        @constraint(model, sum(x[i,j]+x[j,i] for i in regions[r], j in 1:n) >= 1)
+    end
 
-path = solveInstanceDFJ("./Instances/instance_6_1.txt")
+    # R
+    for i in 1:n
+        for j in 1:n 
+            @constraint(model, x[i,j]*D[i,j]<=R) 
+        end 
+    end
+    n_constraints = 0
+    n_subtours = 1
+    while n_subtours > 0 && n_constraints < 2^n
+        # Solve the model
+        optimize!(model)
+        
+        # Retrieve the results
+        if termination_status(model) == MOI.OPTIMAL
+            solution = value.(x)
+            path = []
+            current = d
+            while current != f
+                for j in 1:n
+                    if solution[current, j] > 0.5
+                        push!(path, current)
+                        current = j
+                        break
+                    end
+                end
+            end
+            push!(path, f)
+        else
+            println("No optimal solution found.")
+            path = []
+        end
+        visited, n_subtours = find_length_subtour(n, path)
+        if n_subtours > 0
+            n_constraints += 1
+            subset = [i for i in 1:n if visited[path[i]] > 0 ]
+            println("Adding constraint: ")
+            println(subset)
+            @constraint(model, sum(x[i,j] for i in subset, j in subset) <= length(subset) - 1)
+        end
+    end
+    return path
+end
+
+path = solveInstanceSubDFJ("./Instances/instance_6_1.txt")
 println("Optimal path: ", path)
 
 #path = solveInstanceMTZ(".Instances/instance_6_1.txt")
