@@ -31,6 +31,9 @@ function animateGraphTraversal(file::String, output_path::String)
         end
     end
     
+    # Calculate vertex positions once
+    positions = coords
+    
     # Prepare the animation
     anim = @animate for step in 1:length(path)
         node_colors = fill(:yellow, n)
@@ -39,13 +42,15 @@ function animateGraphTraversal(file::String, output_path::String)
         end
         
         graphplot(A,
-                  markersize = 0.2,
+                  markersize = 0.9,
                   node_weights = 1:n,
                   markercolor = node_colors,
                   names = 1:n,
                   edgelabel=edgelabel_dict,
                   fontsize = 10,
-                  linecolor = :darkgrey
+                  linecolor = :darkgrey,
+                  x = positions[:, 1],  # Fix x positions
+                  y = positions[:, 2]   # Fix y positions
                   )
     end
     
@@ -53,4 +58,4 @@ function animateGraphTraversal(file::String, output_path::String)
     gif(anim, output_path, fps = 1)
 end
 
-animateGraphTraversal("/home/bernas/VSC/JULIA/SOD321/project/Instances/instance_6_1.txt", "graph_traversal.gif")
+animateGraphTraversal("./Instances/instance_20_1.txt", "graph_traversal.gif")
