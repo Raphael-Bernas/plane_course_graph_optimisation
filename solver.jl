@@ -144,6 +144,8 @@ function solveInstanceDFJ(file::String)
                 end
             end
         end
+        visited, n_subtours = test_subtour(n, d, solution)
+        println("Visited: ", visited)
         push!(path, f)
         return path
     else
@@ -169,6 +171,8 @@ function solveInstanceSubDFJ(file::String)
     # Departure and arrival constraints
     @constraint(model, sum(x[d,j] for j in 1:n) == 1)
     @constraint(model, sum(x[i,f] for i in 1:n) == 1)
+    @constraint(model, sum(x[f,i] for i in 1:n) == 0)
+    @constraint(model, sum(x[i,d] for i in 1:n) == 0)
     
     for k in 1:n
         if k != d && k != f
@@ -185,6 +189,12 @@ function solveInstanceSubDFJ(file::String)
         @constraint(model, sum(x[i,j]+x[j,i] for i in regions[r], j in 1:n) >= 1)
     end
 
+    # blocking self-loops
+    for i in 1:n
+        @constraint(model, x[i,i] <= 0)
+    end
+    @constraint(model, x[d,f] <= 0)
+
     # R
     for i in 1:n
         for j in 1:n 
@@ -193,6 +203,8 @@ function solveInstanceSubDFJ(file::String)
     end
     n_constraints = 0
     n_subtours = 1
+    path = []
+    visited = zeros(Int, n)
     while n_subtours > 0 && n_constraints < 2^n
         # Solve the model
         optimize!(model)
@@ -216,20 +228,44 @@ function solveInstanceSubDFJ(file::String)
             println("No optimal solution found.")
             path = []
         end
-        visited, n_subtours = find_length_subtour(n, path)
+        visited, n_subtours = test_subtour(n, d, solution)
+        subset = [i for i in 1:n if visited[i] > 0 ]
+        # println("Visited: ", visited)
+        # println("Path: ", path)
+        new_subset = []
+        if n_subtours == 0
+            for state in subset
+                if !in(state, path)
+                    new_subset = push!(new_subset, state)
+                end
+            end
+        end
+        if length(new_subset) > 0
+            n_subtours = 1
+            subset = new_subset
+        end
         if n_subtours > 0
             n_constraints += 1
-            subset = [i for i in 1:n if visited[path[i]] > 0 ]
+            println("Number of current DFJ constraints: ", n_constraints)
             println("Adding constraint: ")
             println(subset)
             @constraint(model, sum(x[i,j] for i in subset, j in subset) <= length(subset) - 1)
         end
     end
-    return path
+    return path, n_constraints, visited
 end
 
-path = solveInstanceSubDFJ("./Instances/instance_6_1.txt")
+results = @timed begin
+path = solveInstanceDFJ("./Instances/instance_20_1.txt")
 println("Optimal path: ", path)
 
-#path = solveInstanceMTZ(".Instances/instance_6_1.txt")
-#println("Optimal path: ", path)
+# path, n_constraints, visited = solveInstanceSubDFJ("./Instances/instance_6_2.txt")
+# println("Optimal path: ", path)
+# println("Final visited: ", visited)
+# println("Number of constraints added: ", n_constraints)
+
+# path = solveInstanceMTZ("./Instances/instance_20_1.txt")
+# println("Optimal path: ", path)
+end
+
+println("Elapsed time: ", results.time, " seconds")

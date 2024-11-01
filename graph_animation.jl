@@ -10,7 +10,7 @@ function animateGraphTraversal(file::String, output_path::String)
     n, d, f, Amin, Nr, R, regions, coords, D = readInstance(file)
     
     # Solve the instance to get the optimal path
-    path = solveInstanceMTZ(file)
+    path = [19, 8, 5, 20, 18, 4, 13, 10] #solveInstanceMTZ(file)
     
     # Create adjacency matrix A based on distance matrix D
     A = Float64[ if D[i, j] <= R D[i, j] else 0 end for i=1:n, j=1:n ]
@@ -55,7 +55,9 @@ function animateGraphTraversal(file::String, output_path::String)
     end
     
     # Save the animation to the specified output path
-    gif(anim, output_path, fps = 1)
+    # gif(anim, output_path, fps = 1)
+    mp4(anim, output_path, fps = 1)
 end
 
-animateGraphTraversal("./Instances/instance_20_1.txt", "graph_traversal.gif")
+println("Animating graph traversal")
+animateGraphTraversal("./Instances/instance_20_1.txt", "graph_traversal.mp4")

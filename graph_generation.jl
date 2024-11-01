@@ -26,12 +26,22 @@ function plotGraph(file::String, output_path::String)
             end
         end
     end
+    # Create a color vector for the regions
+    region_color = fill(:yellow, n)
+    # choose a color for each region
+    colors = [:red, :green, :blue, :purple, :orange, :cyan, :magenta, :brown, :pink, :grey]
+    for r in 1:Nr
+        color = colors[min(r, length(colors))]
+        for i in regions[r]
+            region_color[i] = color
+        end
+    end
 
     # Plot the graph
     plt = graphplot(A,
               markersize = 0.2,
               node_weights = 1:n,
-              markercolor = range(colorant"yellow", stop=colorant"red", length=n),
+              markercolor = region_color,
               names = 1:n,
               edgelabel=edgelabel_dict,
               fontsize = 10,
