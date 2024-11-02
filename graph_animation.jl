@@ -10,7 +10,8 @@ function animateGraphTraversal(file::String, output_path::String)
     n, d, f, Amin, Nr, R, regions, coords, D = readInstance(file)
     
     # Solve the instance to get the optimal path
-    path = [19, 8, 5, 20, 18, 4, 13, 10] #solveInstanceMTZ(file)
+    path = solveInstanceMTZ(file)
+    println("Optimal path: ", path)
     
     # Create adjacency matrix A based on distance matrix D
     A = Float64[ if D[i, j] <= R D[i, j] else 0 end for i=1:n, j=1:n ]
@@ -42,11 +43,11 @@ function animateGraphTraversal(file::String, output_path::String)
         end
         
         graphplot(A,
-                  markersize = 0.9,
+                  markersize = 10,
                   node_weights = 1:n,
                   markercolor = node_colors,
                   names = 1:n,
-                  edgelabel=edgelabel_dict,
+                  #edgelabel=edgelabel_dict,
                   fontsize = 10,
                   linecolor = :darkgrey,
                   x = positions[:, 1],  # Fix x positions
@@ -60,4 +61,4 @@ function animateGraphTraversal(file::String, output_path::String)
 end
 
 println("Animating graph traversal")
-animateGraphTraversal("./Instances/instance_20_1.txt", "graph_traversal.mp4")
+animateGraphTraversal("./Instances/instance_100_1.txt", "graph_traversal.mp4")

@@ -38,3 +38,15 @@ function test_subtour(n, d, solution)
     end
     return visited, 1
 end
+
+function test_DFJ(n, solution)
+    for S in 1:(2^n-1)
+        subset = [i for i in 1:n if (S >> (i-1)) & 1 == 1]
+        if length(subset) > 1
+            if sum(solution[i,j] for i in subset, j in subset) > length(subset) - 1
+                return subset
+            end
+        end
+    end
+    return []
+end

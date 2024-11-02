@@ -154,6 +154,104 @@ function solveInstanceDFJ(file::String)
     end
 end
 
+function solveInstanceOptimDFJ(file::String, DFJ::Bool)
+    # Read instance data
+    n, d, f, Amin, Nr, R, regions, coords, D = readInstance(file)
+    
+    # Create model
+    model = Model(Gurobi.Optimizer)
+    
+    # Decision variables
+    @variable(model, x[1:n, 1:n], Bin)
+    
+    # Objective: Minimize total distance
+    @objective(model, Min, sum(D[i,j] * x[i,j] for i in 1:n, j in 1:n))
+    
+    # Constraints
+    # Departure and arrival constraints
+    @constraint(model, sum(x[d,j] for j in 1:n) == 1)
+    @constraint(model, sum(x[i,f] for i in 1:n) == 1)
+    @constraint(model, sum(x[f,i] for i in 1:n) == 0)
+    @constraint(model, sum(x[i,d] for i in 1:n) == 0)
+    
+    for k in 1:n
+        if k != d && k != f
+            @constraint(model, sum(x[k,j] for j in 1:n) <= 1)
+            @constraint(model, sum(x[i,k] for i in 1:n) == sum(x[k,j] for j in 1:n))
+        end
+    end
+    
+    # Minimum number of airports constraint
+    @constraint(model, sum(x[i,j] for i in 1:n, j in 1:n) + 1 >= Amin)
+    
+    # Regional visit constraints
+    for r in 1:Nr
+        @constraint(model, sum(x[i,j]+x[j,i] for i in regions[r], j in 1:n) >= 1)
+    end
+
+    if DFJ
+        n_prime = div(n, 2)
+        # DFJ constraints for half problem
+        for S in 1:(2^n_prime - 1)
+            subset = [i for i in 1:n_prime if (S >> (i-1)) & 1 == 1]
+            if 1 <= length(subset) <= n_prime - 1
+                @constraint(model, sum(x[i,j] for i in subset, j in subset) <= length(subset) - 1)
+            end
+        end
+    end
+
+    # blocking self-loops
+    for i in 1:n
+        @constraint(model, x[i,i] <= 0)
+    end
+    @constraint(model, x[d,f] <= 0)
+
+    # R
+    for i in 1:n
+        for j in 1:n 
+            @constraint(model, x[i,j]*D[i,j]<=R) 
+        end 
+    end
+    n_constraints = 0
+    n_subtours = 1
+    path = []
+    while n_subtours > 0 && n_constraints < 2^n
+        # Solve the model
+        optimize!(model)
+        
+        # Retrieve the results
+        if termination_status(model) == MOI.OPTIMAL
+            solution = value.(x)
+            path = []
+            current = d
+            while current != f
+                for j in 1:n
+                    if solution[current, j] > 0.5
+                        push!(path, current)
+                        current = j
+                        break
+                    end
+                end
+            end
+            push!(path, f)
+        else
+            println("No optimal solution found.")
+            path = []
+        end
+        subset = test_DFJ(n, solution)
+        println("Subset: ", subset)
+        n_subtours = length(subset)
+        if n_subtours > 0
+            n_constraints += 1
+            println("Number of current DFJ constraints: ", n_constraints)
+            println("Adding constraint: ")
+            println(subset)
+            @constraint(model, sum(x[i,j] for i in subset, j in subset) <= length(subset) - 1)
+        end
+    end
+    return path, n_constraints
+end
+
 function solveInstanceSubDFJ(file::String)
     # Read instance data
     n, d, f, Amin, Nr, R, regions, coords, D = readInstance(file)
@@ -256,16 +354,21 @@ function solveInstanceSubDFJ(file::String)
 end
 
 results = @timed begin
-path = solveInstanceDFJ("./Instances/instance_20_1.txt")
-println("Optimal path: ", path)
+
+# path, n_constraints = solveInstanceOptimDFJ("./Instances/instance_10_1.txt", true)
+# println("Optimal path: ", path)
+# println("Number of constraints added: ", n_constraints)
+
+# path = solveInstanceDFJ("./Instances/instance_8_1.txt")
+# println("Optimal path: ", path)
 
 # path, n_constraints, visited = solveInstanceSubDFJ("./Instances/instance_6_2.txt")
 # println("Optimal path: ", path)
 # println("Final visited: ", visited)
 # println("Number of constraints added: ", n_constraints)
 
-# path = solveInstanceMTZ("./Instances/instance_20_1.txt")
-# println("Optimal path: ", path)
+path = solveInstanceMTZ("./Instances/instance_70_1.txt")
+println("Optimal path: ", path)
 end
 
 println("Elapsed time: ", results.time, " seconds")
