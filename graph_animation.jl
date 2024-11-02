@@ -61,4 +61,4 @@ function animateGraphTraversal(file::String, output_path::String)
 end
 
 println("Animating graph traversal")
-animateGraphTraversal("./Instances/instance_100_1.txt", "graph_traversal.mp4")
+animateGraphTraversal("./Instances/instance_50_1.txt", "graph_traversal.mp4")

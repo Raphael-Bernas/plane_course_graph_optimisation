@@ -367,7 +367,7 @@ results = @timed begin
 # println("Final visited: ", visited)
 # println("Number of constraints added: ", n_constraints)
 
-path = solveInstanceMTZ("./Instances/instance_70_1.txt")
+path = solveInstanceMTZ("./Instances/instance_50_1.txt")
 println("Optimal path: ", path)
 end
 

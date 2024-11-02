@@ -12,7 +12,6 @@ function solveInstanceFlowModel(file::String)
 
     # Create model
     model = Model(Gurobi.Optimizer)
-    set_optimizer_attribute(model, "Presolve", 0)
 
 
     # Decision variables
@@ -54,7 +53,7 @@ function solveInstanceFlowModel(file::String)
     end
 
     # Flow balance constraint (ensures continuity)
-    for i in 2:n
+    for i in 1:n
         @constraint(model, sum(flow[j, i] for j in 1:n if j != i) - sum(flow[i, j] for j in 1:n if j != i) == x[d, i] - x[i, f])
     end
 
